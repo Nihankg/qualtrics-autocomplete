@@ -1,0 +1,191 @@
+
+// Qualtrics SurveyEngine JavaScript for dynamic NGO question with external autocomplete and duration logic
+Qualtrics.SurveyEngine.addOnload(function () {
+  var that = this;
+
+  var script = document.createElement("script");
+  script.src = "https://nihankg.github.io/qualtrics-autocomplete/autocomplete_data.js";
+
+  script.onload = function () {
+    var container = that.getQuestionContainer();
+    container.classList.add("kurumBlok");
+
+    // ✅ Add datalist elements dynamically
+    function createDatalist(id, values) {
+      var datalist = document.createElement("datalist");
+      datalist.id = id;
+      values.forEach(function (value) {
+        var option = document.createElement("option");
+        option.value = value;
+        datalist.appendChild(option);
+      });
+      document.body.appendChild(datalist);
+    }
+
+    createDatalist("hospital-list", window.hastaneListesi);
+    createDatalist("school-list", window.okulListesi);
+    createDatalist("ilceler-list", window.ilceListesi);
+
+    // ✅ Kurum listesi
+    var ngos = [
+      { id: "courthouse", name: "Adliye Görevlileri" },
+      { id: "ashim", name: "Aile ve Sosyal Hizmetler İl Müdürlüğü (ASHİM)" },
+      { id: "aileburo", name: "Aile İçi ve Kadına Karşı Şiddetle Mücadele Şube Müdürlüğü" },
+      { id: "hospital", name: "Hastane Çalışanları" },
+      { id: "codem", name: "Çocuk Destek Merkezleri (ÇODEM)" },
+      { id: "cim", name: "Çocuk İzlem Merkezi (ÇİM) Çalışanları" },
+      { id: "policecocuk", name: "Çocuk Şube Müdürlüğü Çalışanları" },
+      { id: "return", name: "Geri Gönderme Merkezi Görevlileri" },
+      { id: "iskur", name: "İŞKUR Çalışanları" },
+      { id: "province_muni", name: "İl Belediyesi Çalışanları" },
+      { id: "ilgoc", name: "İl Göç İdaresi Müdürlüğü Çalışanları" },
+      { id: "district_muni", name: "İlçe Belediyesi Çalışanları" },
+	    { id: "kadsig", name: "Kadın Sığınma Evi Çalışanları" },
+      { id: "notary", name: "Noter" },
+      { id: "school", name: "Okul Çalışanları" },
+      { id: "police", name: "Polis Memurları" },
+      { id: "sonim", name: "Şiddet Önleme ve İzleme Merkezleri (ŞÖNİM)" },
+      { id: "sydv", name: "Sosyal Yardımlaşma ve Dayanışma Vakfı (SYDV) Çalışanları" },
+      { id: "other", name: "Diğer (lütfen belirtiniz)" }
+    ];
+
+    ngos.forEach(function (ngo) {
+      var box = document.createElement("div");
+      box.className = "checkbox-wrapper";
+      box.style.marginBottom = "12px";
+
+      var checkboxDiv = document.createElement("div");
+      checkboxDiv.className = "q-checkbox";
+
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = "cb-" + ngo.id;
+
+      var label = document.createElement("label");
+      label.setAttribute("for", checkbox.id);
+      label.textContent = ngo.name;
+
+      checkboxDiv.appendChild(checkbox);
+      checkboxDiv.appendChild(label);
+
+      var followUpDiv = document.createElement("div");
+      followUpDiv.id = "followup-" + ngo.id;
+      followUpDiv.className = "follow-up";
+      followUpDiv.style.marginLeft = "20px";
+      followUpDiv.style.marginTop = "10px";
+      followUpDiv.style.display = "none";
+
+      if (ngo.id === "other") {
+        var textEntry = document.createElement("input");
+        textEntry.type = "text";
+        textEntry.placeholder = "Kurum Adı";
+        textEntry.id = "other-text-entry";
+        textEntry.style.marginBottom = "10px";
+        textEntry.style.display = "block";
+        textEntry.style.width = "60%";
+        followUpDiv.appendChild(textEntry);
+      }
+
+      if (["hospital", "school"].includes(ngo.id)) {
+        var nameLabel = document.createElement("p");
+        nameLabel.textContent = ngo.id === "hospital"
+          ? "Hastanenin adını hatırlıyor musunuz?"
+          : "Okulun adını hatırlıyor musunuz?";
+        nameLabel.style.marginTop = "20px";
+        followUpDiv.appendChild(nameLabel);
+
+        var nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.id = "kurumadi-" + ngo.id;
+        nameInput.setAttribute("list", ngo.id === "hospital" ? "hospital-list" : "school-list");
+        nameInput.placeholder = ngo.id === "hospital" ? "Hastane Adı" : "Okul Adı";
+        nameInput.style.width = "60%";
+        followUpDiv.appendChild(nameInput);
+      }
+
+      followUpDiv.innerHTML +=
+        '<p style="margin-top: 20px; margin-bottom: 8px;">Bu kurumla işiniz yaklaşık olarak ne kadar sürdü? (Bekleme süreleri dahil)</p>' +
+        '<div style="display: flex; gap: 16px; align-items: center;">' +
+        '<div><select id="durationType-' + ngo.id + '" style="min-width: 100px;">' +
+        '<option value="1">1</option><option value="2">2</option><option value="3">3</option>' +
+        '<option value="4">4</option><option value="5">5</option><option value="6">6</option>' +
+        '<option value="7">7</option><option value="8">8</option><option value="9">9</option>' +
+        '<option value="10">10</option><option value="11">11</option><option value="12">12</option>' +
+        '<option value="Hatırlamıyorum">Hatırlamıyorum</option></select></div>' +
+        '<div><select id="durationValue-' + ngo.id + '" style="min-width: 100px;">' +
+        '<option value="Saat">Saat</option><option value="Gün">Gün</option><option value="Hafta">Hafta</option>' +
+        '<option value="Ay">Ay</option><option value="Hatırlamıyorum">Hatırlamıyorum</option></select></div>' +
+        '</div>';
+
+      if (!["hospital", "school"].includes(ngo.id)) {
+        var ilceLabel = document.createElement("p");
+        ilceLabel.textContent = "Bu kurumun bulunduğu ilçeyi hatırlıyor musunuz?";
+        ilceLabel.style.marginTop = "20px";
+        followUpDiv.appendChild(ilceLabel);
+
+        var ilceInput = document.createElement("input");
+        ilceInput.type = "text";
+        ilceInput.id = "ilce-" + ngo.id;
+        ilceInput.setAttribute("list", "ilceler-list");
+        ilceInput.placeholder = "İl / İlçe yazınız";
+        ilceInput.style.width = "60%";
+        followUpDiv.appendChild(ilceInput);
+      }
+
+      box.appendChild(checkboxDiv);
+      box.appendChild(followUpDiv);
+      container.appendChild(box);
+
+      checkbox.addEventListener("change", function () {
+        followUpDiv.style.display = checkbox.checked ? "block" : "none";
+      });
+    });
+
+    that.questionclick = function () {
+      var instIDs = [];
+      var instNames = [];
+
+      ngos.forEach(function (ngo) {
+        var checkbox = document.getElementById("cb-" + ngo.id);
+        if (checkbox && checkbox.checked) {
+          instIDs.push(ngo.id);
+          instNames.push(ngo.name);
+
+          if (ngo.id === "hospital" || ngo.id === "school") {
+            var kurumInput = document.getElementById("kurumadi-" + ngo.id);
+            if (kurumInput) {
+              Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_kurumadi", kurumInput.value.trim());
+            }
+          }
+
+          var durationMiktar = document.getElementById("durationType-" + ngo.id);
+          if (durationMiktar) {
+            Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_sureMiktar", durationMiktar.value);
+          }
+
+          var durationTipi = document.getElementById("durationValue-" + ngo.id);
+          if (durationTipi) {
+            Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_sureTipi", durationTipi.value);
+          }
+
+          var ilceInput = document.getElementById("ilce-" + ngo.id);
+          if (ilceInput) {
+            Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_ilce", ilceInput.value.trim());
+          }
+
+          if (ngo.id === "other") {
+            var otherInput = document.getElementById("other-text-entry");
+            if (otherInput) {
+              Qualtrics.SurveyEngine.setEmbeddedData("case1_otherentry", otherInput.value.trim());
+            }
+          }
+        }
+      });
+
+      Qualtrics.SurveyEngine.setEmbeddedData("case1_INSTID", instIDs.join("|||"));
+      Qualtrics.SurveyEngine.setEmbeddedData("case1_INSTNAME", instNames.join("|||"));
+    };
+  };
+
+  document.head.appendChild(script);
+});
