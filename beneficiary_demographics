@@ -1,0 +1,122 @@
+Qualtrics.SurveyEngine.addOnload(function () {
+  const prefix = "icerde1_";
+
+  // 🌐 Dil tespiti: Q_Language -> tr/ar/en/fa (varsayılan: en)
+  const qLang = (Qualtrics.SurveyEngine.getEmbeddedData("Q_Language") || "EN").toUpperCase();
+  const lang = qLang === "TR" ? "tr" : qLang === "AR" ? "ar" : qLang === "FA" ? "fa" : "en";
+
+  // RTL dilleri için yön
+  const container = this.getQuestionContainer();
+  container.setAttribute("dir", (lang === "ar" || lang === "fa") ? "rtl" : "ltr");
+
+  // 🌍 Çeviri sözlüğü (tr/ar/en/fa)
+  const t = {
+    tr: {
+      title: "Bu vakada, faydalanıcının:",
+      gender: "Cinsiyeti:<br>&nbsp;",
+      nationality: "Uyruğu:<br>&nbsp;",
+      age: "Yaşı:<br><span style='font-weight:normal'>(kaba bir tahminde bulunabilirsiniz)</span>",
+      genderOptions: ["", "Kadın", "Erkek", "Diğer"],
+      nationalityOptions: ["", "Suriyeli", "Afgan", "İranlı", "Iraklı", "Ukraynalı", "Rus"],
+      ageOptions: ["", "18 yaşından küçük", "18-24", "25-34", "35-49", "50 ve üzeri"]
+    },
+    ar: {
+      title: "في هذه الحالة، المستفيد/ة:",
+      gender: "الجنس:<br>&nbsp;",
+      nationality: "الجنسية:<br>&nbsp;",
+      age: "العمر:<br><span style='font-weight:normal'>(يمكنك تقديم تقدير تقريبي)</span>",
+      genderOptions: ["", "أنثى", "ذكر", "أخرى"],
+      nationalityOptions: ["", "سوري", "أفغاني", "إيراني", "عراقي", "أوكراني", "روسي"],
+      ageOptions: ["", "أقل من 18", "18-24", "25-34", "35-49", "50 فما فوق"]
+    },
+    en: {
+      title: "In this case, the beneficiary’s:",
+      gender: "Gender:<br>&nbsp;",
+      nationality: "Nationality:<br>&nbsp;",
+      age: "Age:<br><span style='font-weight:normal'>(an approximate estimate is fine)</span>",
+      genderOptions: ["", "Female", "Male", "Other"],
+      nationalityOptions: ["", "Syrian", "Afghan", "Iranian", "Iraqi", "Ukrainian", "Russian"],
+      ageOptions: ["", "Under 18", "18–24", "25–34", "35–49", "50 and above"]
+    },
+    fa: {
+      title: "در این پرونده، مشخصات ذی‌نفع:",
+      gender: "جنسیت:<br>&nbsp;",
+      nationality: "تابعیت:<br>&nbsp;",
+      age: "سن:<br><span style='font-weight:normal'>(می‌توانید تخمینی تقریبی ارائه کنید)</span>",
+      genderOptions: ["", "زن", "مرد", "سایر"],
+      nationalityOptions: ["", "سوری", "افغان", "ایرانی", "عراقی", "اوکراینی", "روسی"],
+      ageOptions: ["", "کمتر از ۱۸", "۱۸–۲۴", "۲۵–۳۴", "۳۵–۴۹", "۵۰ و بالاتر"]
+    }
+  };
+
+  const L = t[lang] || t.en; // aktif dil
+
+  // Başlık
+  const title = document.createElement("p");
+  title.innerHTML = L.title;
+  title.style.fontWeight = "bold";
+  title.style.fontSize = "20px";
+  title.style.marginBottom = "20px";
+  container.appendChild(title);
+
+  // Satır düzeni
+  const inputRow = document.createElement("div");
+  inputRow.style.display = "flex";
+  inputRow.style.gap = "20px";
+  inputRow.style.alignItems = "flex-start";
+  container.appendChild(inputRow);
+
+  // Yardımcı: select oluşturucu
+  function buildSelect(name, labelHtml, optionsArray) {
+    const wrap = document.createElement("div");
+
+    const label = document.createElement("label");
+    label.innerHTML = labelHtml;
+    label.style.display = "block";
+
+    const select = document.createElement("select");
+    select.name = name;
+
+    optionsArray.forEach(text => {
+      const option = document.createElement("option");
+      option.value = text;
+      option.textContent = text;
+      select.appendChild(option);
+    });
+
+    wrap.appendChild(label);
+    wrap.appendChild(select);
+    return { wrap, select };
+  }
+
+  // Cinsiyet
+  const { wrap: genderWrapper, select: genderSelect } =
+    buildSelect("gender", L.gender, L.genderOptions);
+  inputRow.appendChild(genderWrapper);
+
+  // Uyruk
+  const { wrap: nationalityWrapper, select: nationalitySelect } =
+    buildSelect("nationality", L.nationality, L.nationalityOptions);
+  inputRow.appendChild(nationalityWrapper);
+
+  // Yaş
+  const { wrap: ageWrapper, select: ageSelect } =
+    buildSelect("age", L.age, L.ageOptions);
+  inputRow.appendChild(ageWrapper);
+
+  // 🌟 Önceki cevapları geri yükle
+  const genderStored = Qualtrics.SurveyEngine.getEmbeddedData(prefix + "cinsiyeti");
+  const ageStored = Qualtrics.SurveyEngine.getEmbeddedData(prefix + "yasi");
+  const nationalityStored = Qualtrics.SurveyEngine.getEmbeddedData(prefix + "uyrugu");
+
+  if (genderStored) genderSelect.value = genderStored;
+  if (ageStored) ageSelect.value = ageStored;
+  if (nationalityStored) nationalitySelect.value = nationalityStored;
+
+  // 🌟 Cevapları embedded data olarak kaydet
+  Qualtrics.SurveyEngine.addOnUnload(function () {
+    Qualtrics.SurveyEngine.setEmbeddedData(prefix + "cinsiyeti", genderSelect.value);
+    Qualtrics.SurveyEngine.setEmbeddedData(prefix + "yasi", ageSelect.value);
+    Qualtrics.SurveyEngine.setEmbeddedData(prefix + "uyrugu", nationalitySelect.value);
+  });
+});
