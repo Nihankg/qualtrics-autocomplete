@@ -4,6 +4,34 @@ Custom JavaScript components for collecting structured information about interac
 
 The repository combines institution selection, conditional follow-up questions, autocomplete suggestions, and demographic fields. It includes Turkish, English, Arabic, and Persian interface text, with right-to-left layout for Arabic and Persian.
 
+## Research use
+
+These components were tested and used in a research survey designed to collect data for network modeling of relationships between service providers and public institutions.
+
+The survey captures which institutions respondents interact with, how frequently they communicate, whether they personally know someone at those institutions, and how long beneficiaries' cases take to resolve. These measures support an investigation of whether personal connections are associated with the time required to access services or complete administrative processes.
+
+Data collection is complete; analysis and manuscript preparation are pending.
+
+## Screenshots
+
+### Institution selection and autocomplete
+
+Selecting an institution reveals follow-up questions about interaction duration, location, and personal connections. The Turkish example below shows province/district autocomplete suggestions.
+
+![Institution selection with conditional follow-up questions and location autocomplete](docs/images/institution-autocomplete.png)
+
+### Interaction frequency
+
+The survey also captures how frequently respondents communicate with selected institutions, including a free-text option.
+
+![Institution selection with conditional interaction-frequency questions](docs/images/interaction-frequency.png)
+
+### Demographic fields
+
+The demographic component collects gender, nationality, and age group. The example below shows the Turkish interface.
+
+![Turkish demographic fields for gender, nationality, and age group](docs/images/demographics.png)
+
 ## Features
 
 - **Conditional questions:** Selecting an institution reveals follow-up fields for interaction duration, location or institution name, and whether the respondent knew someone at that institution.
@@ -83,3 +111,6 @@ Test all four languages, right-to-left display, mobile layout, autocomplete load
 
 Review study-specific wording, including any confidentiality statements, before adapting it. This README documents the current code; it does not establish browser compatibility or replace end-to-end survey validation.
 
+<img width="394" height="754" alt="interaction-frequency" src="https://github.com/user-attachments/assets/067c99e9-34d7-4cbb-80c3-4fd0a650f3c3" />
+<img width="395" height="723" alt="institution-autocomplete" src="https://github.com/user-attachments/assets/cb534d17-5e26-4e3f-906a-68a5d078e0f7" />
+<img width="405" height="122" alt="demographics" src="https://github.com/user-attachments/assets/fc757361-fff5-49eb-8836-6de07cea0579" />
