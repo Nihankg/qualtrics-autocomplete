@@ -1,7 +1,18 @@
-
-// Qualtrics SurveyEngine JavaScript for dynamic NGO question with external autocomplete and duration logic
+// Qualtrics SurveyEngine JavaScript for dynamic NGO question with persistence support
 Qualtrics.SurveyEngine.addOnload(function () {
   var that = this;
+  const prefix = "icerde1_";
+
+  // 🌐 Dil tespiti (TR varsayılan). Sayfa AR/EN/FA yüklendiyse ilgili metinleri göster.
+  var qLang = (Qualtrics.SurveyEngine.getEmbeddedData("Q_Language") || "TR").toUpperCase();
+  var lang  = (qLang === "AR") ? "ar" : (qLang === "EN") ? "en" : (qLang === "FA") ? "fa" : "tr";
+
+  // RTL dilleri için yön
+  var root = this.getQuestionContainer();
+  root.setAttribute("dir", (lang === "ar" || lang === "fa") ? "rtl" : "ltr");
+
+  // Yardımcı çeviri seçici
+  function T(tr, ar, en, fa) { return lang === "ar" ? ar : (lang === "en" ? en : (lang === "fa" ? fa : tr)); }
 
   var script = document.createElement("script");
   script.src = "https://nihankg.github.io/qualtrics-autocomplete/autocomplete_data.js";
@@ -14,7 +25,7 @@ Qualtrics.SurveyEngine.addOnload(function () {
     function createDatalist(id, values) {
       var datalist = document.createElement("datalist");
       datalist.id = id;
-      values.forEach(function (value) {
+      (values || []).forEach(function (value) {
         var option = document.createElement("option");
         option.value = value;
         datalist.appendChild(option);
@@ -26,27 +37,28 @@ Qualtrics.SurveyEngine.addOnload(function () {
     createDatalist("school-list", window.okulListesi);
     createDatalist("ilceler-list", window.ilceListesi);
 
-    // ✅ Kurum listesi
+    // ✅ Kurum listesi (TR/AR/EN/FA)
     var ngos = [
-      { id: "courthouse", name: "Adliye Görevlileri" },
-      { id: "ashim", name: "Aile ve Sosyal Hizmetler İl Müdürlüğü (ASHİM)" },
-      { id: "aileburo", name: "Aile İçi ve Kadına Karşı Şiddetle Mücadele Şube Müdürlüğü" },
-      { id: "hospital", name: "Hastane Çalışanları" },
-      { id: "codem", name: "Çocuk Destek Merkezleri (ÇODEM)" },
-      { id: "cim", name: "Çocuk İzlem Merkezi (ÇİM) Çalışanları" },
-      { id: "policecocuk", name: "Çocuk Şube Müdürlüğü Çalışanları" },
-      { id: "return", name: "Geri Gönderme Merkezi Görevlileri" },
-      { id: "iskur", name: "İŞKUR Çalışanları" },
-      { id: "province_muni", name: "İl Belediyesi Çalışanları" },
-      { id: "ilgoc", name: "İl Göç İdaresi Müdürlüğü Çalışanları" },
-      { id: "district_muni", name: "İlçe Belediyesi Çalışanları" },
-	    { id: "kadsig", name: "Kadın Sığınma Evi Çalışanları" },
-      { id: "notary", name: "Noter" },
-      { id: "school", name: "Okul Çalışanları" },
-      { id: "police", name: "Polis Memurları" },
-      { id: "sonim", name: "Şiddet Önleme ve İzleme Merkezleri (ŞÖNİM)" },
-      { id: "sydv", name: "Sosyal Yardımlaşma ve Dayanışma Vakfı (SYDV) Çalışanları" },
-      { id: "other", name: "Diğer (lütfen belirtiniz)" }
+      { id: "courthouse",    name: T("Adliye Görevlileri","الموظفون في المحكمة","Courthouse Staff","کارکنان دادگاه") },
+      { id: "ashim",         name: T("Aile ve Sosyal Hizmetler İl Müdürlüğü (ASHİM)","مديرية الأسرة والخدمات الاجتماعية (ASHİM)","Provincial Directorate of Family and Social Services (ASHİM)","مدیریت استانی خانواده و خدمات اجتماعی (ASHİM)") },
+      { id: "aileburo",      name: T("Aile İçi ve Kadına Karşı Şiddetle Mücadele Şube Müdürlüğü (Aile İçi Şiddet Büro)","مديرية مكافحة العنف الأسري والعنف ضد المرأة (مكتب العنف الأسري)","Domestic Violence & Violence Against Women Branch (Domestic Violence Bureau)","اداره مبارزه با خشونت خانگی و خشونت علیه زنان") },
+      { id: "hospital",      name: T("Hastane Çalışanları","موظفو المستشفى","Hospital Staff","کارکنان بیمارستان") },
+      { id: "codem",         name: T("Çocuk Destek Merkezleri (ÇODEM)","مراكز دعم الأطفال (ÇODEM)","Child Support Centers (ÇODEM)","مراکز حمایت از کودک (ÇODEM)") },
+      { id: "cocukev",       name: T("Çocuk Evleri","بيوت الأطفال","Children’s Homes","خانه‌های کودک") },
+      { id: "cim",           name: T("Çocuk İzlem Merkezi (ÇİM) Çalışanları","مركز مراقبة الأطفال (ÇİM) – الموظفون","Child Monitoring Center (ÇİM) – Staff","مرکز پایش کودک (ÇİM) – کارکنان") },
+      { id: "policecocuk",   name: T("Çocuk Şube Müdürlüğü Çalışanları","قسم شرطة الأطفال – الموظفون","Children’s Police Department – Staff","اداره پلیس کودکان – کارکنان") },
+      { id: "return",        name: T("Geri Gönderme Merkezi Görevlileri","الموظفون في مركز الترحيل","Removal Center Staff","کارکنان مرکز بازگرداندن") },
+      { id: "iskur",         name: T("İŞKUR Çalışanları","موظفو مؤسسة İŞKUR","İŞKUR Staff","کارکنان İŞKUR") },
+      { id: "province_muni", name: T("İl Belediyesi Çalışanları","موظفو البلدية (المحافظة)","Metropolitan/Provincial Municipality Staff","کارکنان شهرداری (استان)") },
+      { id: "ilgoc",         name: T("İl Göç İdaresi Müdürlüğü Çalışanları","موظفو مديرية الهجرة في الولاية","Provincial Directorate of Migration Management – Staff","کارکنان مدیریت مهاجرت استانی") },
+      { id: "district_muni", name: T("İlçe Belediyesi Çalışanları","موظفو البلدية (القضاء)","District Municipality Staff","کارکنان شهرداری (بخش/ناحیه)") },
+      { id: "kadsig",        name: T("Kadın Sığınma Evi Çalışanları","موظفو دار إيواء النساء","Women’s Shelter Staff","کارکنان خانه امن زنان") },
+      { id: "notary",        name: T("Noter","كاتب العدل","Notary","دفتر اسناد رسمی") },
+      { id: "school",        name: T("Okul Çalışanları","موظفو المدرسة","School Staff","کارکنان مدرسه") },
+      { id: "police",        name: T("Polis Memurları","ضباط الشرطة","Police Officers","افسران پلیس") },
+      { id: "sonim",         name: T("Şiddet Önleme ve İzleme Merkezleri (ŞÖNİM)","مراكز منع ومراقبة العنف (ŞÖNİM)","Violence Prevention & Monitoring Centers (ŞÖNİM)","مراکز پیشگیری و پایش خشونت (ŞÖNİM)") },
+      { id: "sydv",          name: T("Sosyal Yardımlaşma ve Dayanışma Vakfı (SYDV) Çalışanları","مؤسسة التضامن والمساعدة الاجتماعية (SYDV) – الموظفون","Social Assistance & Solidarity Foundation (SYDV) – Staff","بنیاد همیاری و همبستگی اجتماعی (SYDV) – کارکنان") },
+      { id: "other",         name: T("Diğer (lütfen belirtiniz)","أخرى (يرجى التوضيح)","Other (please specify)","سایر (لطفاً توضیح دهید)") }
     ];
 
     ngos.forEach(function (ngo) {
@@ -78,7 +90,7 @@ Qualtrics.SurveyEngine.addOnload(function () {
       if (ngo.id === "other") {
         var textEntry = document.createElement("input");
         textEntry.type = "text";
-        textEntry.placeholder = "Kurum Adı";
+        textEntry.placeholder = T("Kurum Adı","اسم الجهة","Institution Name","نام نهاد");
         textEntry.id = "other-text-entry";
         textEntry.style.marginBottom = "10px";
         textEntry.style.display = "block";
@@ -88,9 +100,10 @@ Qualtrics.SurveyEngine.addOnload(function () {
 
       if (["hospital", "school"].includes(ngo.id)) {
         var nameLabel = document.createElement("p");
-        nameLabel.textContent = ngo.id === "hospital"
-          ? "Hastanenin adını hatırlıyor musunuz?"
-          : "Okulun adını hatırlıyor musunuz?";
+        nameLabel.textContent =
+          (ngo.id === "hospital")
+            ? T("Hastanenin adını hatırlıyor musunuz?","هل تتذكر اسم المستشفى؟","Do you remember the hospital’s name?","نام بیمارستان را به یاد دارید؟")
+            : T("Okulun adını hatırlıyor musunuz?","هل تتذكر اسم المدرسة؟","Do you remember the school’s name?","نام مدرسه را به یاد دارید؟");
         nameLabel.style.marginTop = "20px";
         followUpDiv.appendChild(nameLabel);
 
@@ -98,39 +111,110 @@ Qualtrics.SurveyEngine.addOnload(function () {
         nameInput.type = "text";
         nameInput.id = "kurumadi-" + ngo.id;
         nameInput.setAttribute("list", ngo.id === "hospital" ? "hospital-list" : "school-list");
-        nameInput.placeholder = ngo.id === "hospital" ? "Hastane Adı" : "Okul Adı";
+        nameInput.placeholder =
+          (ngo.id === "hospital")
+            ? T("Hastane Adı","اسم المستشفى","Hospital Name","نام بیمارستان")
+            : T("Okul Adı","اسم المدرسة","School Name","نام مدرسه");
         nameInput.style.width = "60%";
         followUpDiv.appendChild(nameInput);
       }
 
+      // Süre blokları (TR/AR/EN/FA metinleri)
+      var dontRemember = T("Hatırlamıyorum","لا أتذكر","I don't remember","یادم نیست");
       followUpDiv.innerHTML +=
-        '<p style="margin-top: 20px; margin-bottom: 8px;">Bu kurumla işiniz yaklaşık olarak ne kadar sürdü? (Bekleme süreleri dahil)</p>' +
+        '<p style="margin-top: 20px; margin-bottom: 8px;">' +
+          T(
+            'Bu kurumla işiniz yaklaşık olarak ne kadar sürdü? (Bekleme süreleri dahil)',
+            'كم استغرقت معاملتك مع هذه الجهة تقريبًا؟ (بما في ذلك أوقات الانتظار)',
+            'Approximately how long did your work with this institution take? (including waiting time)',
+            'تقریباً کار شما با این نهاد چقدر طول کشید؟ (شامل زمان انتظار)'
+          ) +
+        '</p>' +
         '<div style="display: flex; gap: 16px; align-items: center;">' +
-        '<div><select id="durationType-' + ngo.id + '" style="min-width: 100px;">' +
-        '<option value="1">1</option><option value="2">2</option><option value="3">3</option>' +
-        '<option value="4">4</option><option value="5">5</option><option value="6">6</option>' +
-        '<option value="7">7</option><option value="8">8</option><option value="9">9</option>' +
-        '<option value="10">10</option><option value="11">11</option><option value="12">12</option>' +
-        '<option value="Hatırlamıyorum">Hatırlamıyorum</option></select></div>' +
-        '<div><select id="durationValue-' + ngo.id + '" style="min-width: 100px;">' +
-        '<option value="Saat">Saat</option><option value="Gün">Gün</option><option value="Hafta">Hafta</option>' +
-        '<option value="Ay">Ay</option><option value="Hatırlamıyorum">Hatırlamıyorum</option></select></div>' +
+          '<div><select id="durationType-' + ngo.id + '" style="min-width: 100px;">' +
+            '<option value="1">1</option><option value="2">2</option><option value="3">3</option>' +
+            '<option value="4">4</option><option value="5">5</option><option value="6">6</option>' +
+            '<option value="7">7</option><option value="8">8</option><option value="9">9</option>' +
+            '<option value="10">10</option><option value="11">11</option><option value="12">12</option>' +
+            '<option value="' + dontRemember + '">' + dontRemember + '</option></select></div>' +
+          '<div><select id="durationValue-' + ngo.id + '" style="min-width: 100px;">' +
+            [
+              T("Saat","ساعة","Hour","ساعت"),
+              T("Gün","يوم","Day","روز"),
+              T("Hafta","أسبوع","Week","هفته"),
+              T("Ay","شهر","Month","ماه"),
+              dontRemember
+            ].map(function(u){ return '<option value="'+u+'">'+u+'</option>'; }).join('') +
+          '</select></div>' +
         '</div>';
 
       if (!["hospital", "school"].includes(ngo.id)) {
         var ilceLabel = document.createElement("p");
-        ilceLabel.textContent = "Bu kurumun bulunduğu ilçeyi hatırlıyor musunuz?";
+        if (ngo.id === "kadsig") {
+          ilceLabel.textContent = T(
+            "İlçe ve mahalle düzeyinde belirtiniz (bu bilgi sadece istatisksel amaçla kullanılacak ve hiçbir şekilde kimseyle paylaşılmayacaktır).",
+            "يرجى التحديد على مستوى القضاء والحي (ستُستخدم هذه المعلومات لأغراض إحصائية فقط ولن تُشارك مع أي جهة).",
+            "Please specify at district and neighborhood level (this info is for statistical purposes only and won’t be shared).",
+            "لطفاً در سطح شهرستان و محله مشخص کنید (این اطلاعات فقط برای اهداف آماری استفاده می‌شود و با کسی به اشتراک گذاشته نخواهد شد)."
+          );
+        } else {
+          ilceLabel.textContent = T(
+            "Bu kurumun bulunduğu ilçeyi hatırlıyor musunuz? (Siz ilçe adını yazmaya başladıkça otomatik liste görünecektir)",
+            "هل تتذكر القضاء الذي تقع فيه هذه الجهة؟ (ستظهر قائمة تلقائية أثناء الكتابة)",
+            "Do you remember the district where this institution is located? (an auto list will appear as you type)",
+            "آیا نام شهرستان/ناحیه‌ای که این نهاد در آن قرار دارد را به یاد دارید؟ (حین تایپ فهرست خودکار نمایش داده می‌شود)"
+          );
+        }
         ilceLabel.style.marginTop = "20px";
         followUpDiv.appendChild(ilceLabel);
 
         var ilceInput = document.createElement("input");
         ilceInput.type = "text";
         ilceInput.id = "ilce-" + ngo.id;
-        ilceInput.setAttribute("list", "ilceler-list");
-        ilceInput.placeholder = "İl / İlçe yazınız";
+        ilceInput.placeholder = (ngo.id === "kadsig")
+          ? T("Mahalle yazınız","اكتب/ي اسم الحي","Type neighborhood","نام محله را بنویسید")
+          : T("İl / İlçe yazınız","اكتب/ي الولاية / القضاء","Type province / district","استان / شهرستان را بنویسید");
         ilceInput.style.width = "60%";
+
+        if (ngo.id !== "kadsig") {
+          ilceInput.setAttribute("list", "ilceler-list");
+        }
         followUpDiv.appendChild(ilceInput);
       }
+
+      // Evet/Hayır (TR/AR/EN/FA)
+      var tanidikLabel = document.createElement("p");
+      tanidikLabel.textContent = T(
+        "Bu kurumda ismen tanıdığınız biri var mıydı?",
+        "هل كان لديك/ِ شخص تعرفه بالاسم في هذه الجهة؟",
+        "Did you personally know someone by name at this institution?",
+        "آیا شخصی را در این نهاد به اسم می‌شناختید؟"
+      );
+      tanidikLabel.style.marginTop = "20px";
+      followUpDiv.appendChild(tanidikLabel);
+
+      var radioWrapper = document.createElement("div");
+      radioWrapper.style.display = "flex";
+      radioWrapper.style.gap = "20px";
+      radioWrapper.style.marginTop = "8px";
+
+      [ T("Evet","نعم","Yes","بله"), T("Hayır","لا","No","خیر") ].forEach(function (optionText) {
+        var radioContainer = document.createElement("label");
+        radioContainer.style.display = "flex";
+        radioContainer.style.alignItems = "center";
+        radioContainer.style.gap = "6px";
+
+        var radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "tanidik-" + ngo.id;
+        radio.value = optionText;
+
+        radioContainer.appendChild(radio);
+        radioContainer.appendChild(document.createTextNode(optionText));
+        radioWrapper.appendChild(radioContainer);
+      });
+
+      followUpDiv.appendChild(radioWrapper);
 
       box.appendChild(checkboxDiv);
       box.appendChild(followUpDiv);
@@ -141,9 +225,42 @@ Qualtrics.SurveyEngine.addOnload(function () {
       });
     });
 
+    // Restore previous selections
+    var storedIDs = Qualtrics.SurveyEngine.getEmbeddedData(prefix + "INSTID") || "";
+    var selectedIDs = storedIDs.split("|||").filter(Boolean);
+
+    selectedIDs.forEach(function (id) {
+      var checkbox = document.getElementById("cb-" + id);
+      if (checkbox) checkbox.checked = true;
+      var followUp = document.getElementById("followup-" + id);
+      if (followUp) followUp.style.display = "block";
+
+      var fields = ["sureMiktar", "sureTipi", "ilce", "tanidik", "kurumadi"];
+      fields.forEach(function (field) {
+        var key = prefix + id + "_" + field;
+        var val = Qualtrics.SurveyEngine.getEmbeddedData(key);
+        var input = document.getElementById(
+          field === "kurumadi"   ? "kurumadi-"     + id :
+          field === "ilce"       ? "ilce-"         + id :
+          field === "sureMiktar" ? "durationType-" + id :
+          field === "sureTipi"   ? "durationValue-"+ id : null
+        );
+        if (input && val) input.value = val;
+        if (field === "tanidik" && val) {
+          var radio = document.querySelector('input[name="tanidik-' + id + '"][value="' + val + '"]');
+          if (radio) radio.checked = true;
+        }
+      });
+
+      if (id === "other") {
+        var otherVal = Qualtrics.SurveyEngine.getEmbeddedData(prefix + "otherentry");
+        var otherInput = document.getElementById("other-text-entry");
+        if (otherInput && otherVal) otherInput.value = otherVal;
+      }
+    });
+
     that.questionclick = function () {
-      var instIDs = [];
-      var instNames = [];
+      var instIDs = [], instNames = [];
 
       ngos.forEach(function (ngo) {
         var checkbox = document.getElementById("cb-" + ngo.id);
@@ -151,39 +268,41 @@ Qualtrics.SurveyEngine.addOnload(function () {
           instIDs.push(ngo.id);
           instNames.push(ngo.name);
 
-          if (ngo.id === "hospital" || ngo.id === "school") {
-            var kurumInput = document.getElementById("kurumadi-" + ngo.id);
-            if (kurumInput) {
-              Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_kurumadi", kurumInput.value.trim());
+          var fields = ["sureMiktar", "sureTipi", "ilce", "tanidik", "kurumadi"];
+          fields.forEach(function (field) {
+            var input = document.getElementById(
+              field === "kurumadi"   ? "kurumadi-"     + ngo.id :
+              field === "ilce"       ? "ilce-"         + ngo.id :
+              field === "sureMiktar" ? "durationType-" + ngo.id :
+              field === "sureTipi"   ? "durationValue-"+ ngo.id : null
+            );
+            if (input) {
+              Qualtrics.SurveyEngine.setEmbeddedData(prefix + ngo.id + "_" + field, input.value.trim());
             }
-          }
+          });
 
-          var durationMiktar = document.getElementById("durationType-" + ngo.id);
-          if (durationMiktar) {
-            Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_sureMiktar", durationMiktar.value);
-          }
-
-          var durationTipi = document.getElementById("durationValue-" + ngo.id);
-          if (durationTipi) {
-            Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_sureTipi", durationTipi.value);
-          }
-
-          var ilceInput = document.getElementById("ilce-" + ngo.id);
-          if (ilceInput) {
-            Qualtrics.SurveyEngine.setEmbeddedData("case1_" + ngo.id + "_ilce", ilceInput.value.trim());
+          var tanidik = document.querySelector('input[name="tanidik-' + ngo.id + '"]:checked');
+          if (tanidik) {
+            Qualtrics.SurveyEngine.setEmbeddedData(prefix + ngo.id + "_tanidik", tanidik.value);
           }
 
           if (ngo.id === "other") {
             var otherInput = document.getElementById("other-text-entry");
             if (otherInput) {
-              Qualtrics.SurveyEngine.setEmbeddedData("case1_otherentry", otherInput.value.trim());
+              Qualtrics.SurveyEngine.setEmbeddedData(prefix + "otherentry", otherInput.value.trim());
             }
           }
+
+          // secildi bayrağı
+          Qualtrics.SurveyEngine.setEmbeddedData(prefix + ngo.id + "_secildi", "1");
+
+        } else {
+          Qualtrics.SurveyEngine.setEmbeddedData(prefix + ngo.id + "_secildi", "0");
         }
       });
 
-      Qualtrics.SurveyEngine.setEmbeddedData("case1_INSTID", instIDs.join("|||"));
-      Qualtrics.SurveyEngine.setEmbeddedData("case1_INSTNAME", instNames.join("|||"));
+      Qualtrics.SurveyEngine.setEmbeddedData(prefix + "INSTID", instIDs.join("|||"));
+      Qualtrics.SurveyEngine.setEmbeddedData(prefix + "INSTNAME", instNames.join("|||"));
     };
   };
 
