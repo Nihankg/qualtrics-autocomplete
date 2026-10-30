@@ -1,4 +1,4 @@
-# Multilingual Survey Components for Qualtrics
+# Custom Survey Components for Qualtrics
 
 Custom JavaScript components for collecting structured information about interactions with public institutions and service providers in multilingual social research.
 
